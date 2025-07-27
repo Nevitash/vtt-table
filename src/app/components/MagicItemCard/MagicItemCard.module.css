@@ -1,0 +1,45 @@
+.cardBody {
+    background-color: red;
+    width: 300px;
+    min-height: 600px;
+    display: flex;
+}
+
+.cardContainer {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    background-color: green;
+    width: 100%;
+    padding: 15px;
+    gap: 5px;
+    flex: 1;
+}
+
+.cardInfoText {
+    background-color: yellow;
+    width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    box-sizing: border-box;
+}
+
+.cardImage {
+    width: 100%;
+    aspect-ratio: 1;
+    background-color: blue;
+    flex-shrink: 0;
+}
+
+.cardDescription {
+    flex: 1;
+    background-color: blueviolet;
+    width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    box-sizing: border-box;
+    min-height: 100px;
+}
