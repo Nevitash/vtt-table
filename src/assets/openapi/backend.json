@@ -1,0 +1,488 @@
+{
+    "schemes": [],
+    "swagger": "2.0",
+    "info": {
+        "description": "These endpoints can help you game master for dnd5e (atm)",
+        "title": "Backend for a gm toolkit",
+        "contact": {},
+        "version": "1.0.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/",
+    "paths": {
+        "/encounter-calculator": {
+            "post": {
+                "description": "Calculate the appropriate Challenge Rating for monsters in a D\u0026D 5e encounter based on party size, level, and difficulty",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "encounter-calculator"
+                ],
+                "summary": "Calculate monster CR for encounter",
+                "parameters": [
+                    {
+                        "description": "Encounter CR calculation request",
+                        "name": "encounter",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.CalculateEncounterCRsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Calculated monster CRs and XP values",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/requests.Monster"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid request format or calculation error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/encounter-calculator/recommend/spell-slots": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "encounter-calculator"
+                ],
+                "summary": "Get recommended spell slots for an enemy of the given CR",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "name": "cr",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Calculated spell slots for the given CR",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/responses.SpellSlotsPerCrResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid request format or calculation error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/encounter-calculator/recommend/stats": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "encounter-calculator"
+                ],
+                "summary": "Get recommended stats for an enemy of the given CR",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "name": "cr",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Calculated stats for the given CR",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/responses.RecommendedStatsResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - invalid request format or calculation error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/user": {
+            "post": {
+                "description": "Create a new user with name and email",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Create a new user",
+                "parameters": [
+                    {
+                        "description": "User creation request",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.UserCreationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/ent.User"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - user couldn't be created",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "config.Difficulty": {
+            "type": "string",
+            "enum": [
+                "easy",
+                "medium",
+                "hard",
+                "deadly"
+            ],
+            "x-enum-varnames": [
+                "DIFFICULTY_EASY",
+                "DIFFICULTY_MEDIUM",
+                "DIFFICULTY_HARD",
+                "DIFFICULTY_DEADLY"
+            ]
+        },
+        "ent.Combatant": {
+            "type": "object",
+            "properties": {
+                "ac": {
+                    "description": "Armor Class",
+                    "type": "integer"
+                },
+                "cr": {
+                    "description": "Challenge Rating, e.g., 1.25",
+                    "type": "number"
+                },
+                "damage": {
+                    "description": "Damage as decimal, e.g., 45.6",
+                    "type": "number"
+                },
+                "dc": {
+                    "description": "Difficulty Class",
+                    "type": "integer"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the CombatantQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.CombatantEdges"
+                        }
+                    ]
+                },
+                "hit_dice": {
+                    "description": "Hit dice as string, e.g., '2d8+2'",
+                    "type": "string"
+                },
+                "hp": {
+                    "description": "Hit Points",
+                    "type": "integer"
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "string"
+                },
+                "is_boss": {
+                    "description": "Whether this combatant is a boss",
+                    "type": "boolean"
+                },
+                "is_legendary": {
+                    "description": "Whether this combatant is legendary",
+                    "type": "boolean"
+                },
+                "name": {
+                    "description": "Name holds the value of the \"name\" field.",
+                    "type": "string"
+                },
+                "speed_mod": {
+                    "description": "Speed modifier, can be negative",
+                    "type": "integer"
+                }
+            }
+        },
+        "ent.CombatantEdges": {
+            "type": "object",
+            "properties": {
+                "encounter_combatants": {
+                    "description": "EncounterCombatants holds the value of the encounter_combatants edge.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.EncounterCombatant"
+                    }
+                }
+            }
+        },
+        "ent.Encounter": {
+            "type": "object",
+            "properties": {
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the EncounterQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.EncounterEdges"
+                        }
+                    ]
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Name holds the value of the \"name\" field.",
+                    "type": "string"
+                },
+                "user_id": {
+                    "description": "ID of the user who owns this encounter",
+                    "type": "string"
+                }
+            }
+        },
+        "ent.EncounterCombatant": {
+            "type": "object",
+            "properties": {
+                "combatant_id": {
+                    "description": "Reference to the combatant",
+                    "type": "string"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the EncounterCombatantQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.EncounterCombatantEdges"
+                        }
+                    ]
+                },
+                "encounter_id": {
+                    "description": "Reference to the encounter",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "string"
+                },
+                "is_enemy": {
+                    "description": "Whether this combatant is an enemy",
+                    "type": "boolean"
+                },
+                "is_friendly": {
+                    "description": "Whether this combatant is friendly",
+                    "type": "boolean"
+                },
+                "is_party_member": {
+                    "description": "Whether this combatant is a party member",
+                    "type": "boolean"
+                }
+            }
+        },
+        "ent.EncounterCombatantEdges": {
+            "type": "object",
+            "properties": {
+                "combatant": {
+                    "description": "Combatant holds the value of the combatant edge.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.Combatant"
+                        }
+                    ]
+                },
+                "encounter": {
+                    "description": "Encounter holds the value of the encounter edge.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.Encounter"
+                        }
+                    ]
+                }
+            }
+        },
+        "ent.EncounterEdges": {
+            "type": "object",
+            "properties": {
+                "encounter_combatants": {
+                    "description": "EncounterCombatants holds the value of the encounter_combatants edge.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.EncounterCombatant"
+                    }
+                }
+            }
+        },
+        "ent.User": {
+            "type": "object",
+            "properties": {
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the UserQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.UserEdges"
+                        }
+                    ]
+                },
+                "email": {
+                    "description": "Email holds the value of the \"email\" field.",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Name holds the value of the \"name\" field.",
+                    "type": "string"
+                },
+                "verified": {
+                    "description": "Verified holds the value of the \"verified\" field.",
+                    "type": "boolean"
+                }
+            }
+        },
+        "ent.UserEdges": {
+            "type": "object",
+            "properties": {
+                "encounter": {
+                    "description": "Encounter holds the value of the encounter edge.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.Encounter"
+                    }
+                }
+            }
+        },
+        "requests.CalculateEncounterCRsRequest": {
+            "type": "object",
+            "properties": {
+                "difficulty": {
+                    "$ref": "#/definitions/config.Difficulty"
+                },
+                "monsters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/requests.Monster"
+                    }
+                },
+                "partyLevel": {
+                    "type": "integer"
+                },
+                "partySize": {
+                    "type": "integer"
+                }
+            }
+        },
+        "requests.Monster": {
+            "type": "object",
+            "properties": {
+                "adjustment": {
+                    "type": "integer"
+                },
+                "cr": {
+                    "type": "string"
+                },
+                "xp": {
+                    "type": "integer"
+                }
+            }
+        },
+        "requests.UserCreationRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "responses.RecommendedStatsResponse": {
+            "type": "object",
+            "properties": {
+                "ac": {
+                    "type": "integer"
+                },
+                "attackModifier": {
+                    "type": "integer"
+                },
+                "avarageDamage": {
+                    "type": "integer"
+                },
+                "cr": {
+                    "type": "string"
+                },
+                "dc": {
+                    "type": "integer"
+                },
+                "hp": {
+                    "type": "integer"
+                }
+            }
+        },
+        "responses.SpellSlotsPerCrResponse": {
+            "type": "object",
+            "properties": {
+                "cr": {
+                    "type": "string"
+                },
+                "slots": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/responses.Spells"
+                    }
+                }
+            }
+        },
+        "responses.Spells": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                },
+                "level": {
+                    "type": "integer"
+                }
+            }
+        }
+    }
+}
