@@ -11,6 +11,7 @@
   "dependencies": {
     "@openapitools/openapi-generator-cli": "^2.21.4",
     "axios": "^1.11.0",
+    "lucide-react": "^0.539.0",
     "next": "15.3.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
