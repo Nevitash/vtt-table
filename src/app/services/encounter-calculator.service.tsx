@@ -1,4 +1,4 @@
-import { EncounterCalculatorApi, RequestsCalculateEncounterCRsRequest }from '../../api-client';
+import { EncounterCalculatorApi, RequestsCalculateEncounterCRsRequest, RequestsMonster }from '../../api-client';
 
 /**
  * A factory function that creates an encounter calculator service.
@@ -6,7 +6,7 @@ import { EncounterCalculatorApi, RequestsCalculateEncounterCRsRequest }from '../
  */
 export const createEncounterCalcService = (apiClient: EncounterCalculatorApi) => {
   return {
-    async calculateCrsForEncounter(request: RequestsCalculateEncounterCRsRequest) {
+    async calculateCrsForEncounter(request: RequestsCalculateEncounterCRsRequest): Promise<RequestsMonster[]>{
       try {
         const response = await apiClient.encounterCalculatorPost(request);
         return response.data;

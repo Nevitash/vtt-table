@@ -4,7 +4,7 @@ import { useEncounterCalculatorService } from "@/app/config/provider.config";
 import { EncounterCalcServiceType } from "@/app/services/encounter-calculator.service";
 import { useState } from "react";
 import { Plus, Trash2, Loader, Sparkles } from 'lucide-react';
-import { RequestsCalculateEncounterCRsRequest } from "@/api-client/api";
+import { RequestsCalculateEncounterCRsRequest, RequestsMonster } from "@/api-client/api";
 
 // This is the main component for the Encounter Calculator page.
 // It handles all the UI logic, state management, and calls the service.
@@ -12,20 +12,26 @@ export default function EncouterCalculator() {
   // Use the custom hook to get the service instance from the provider.
   const encounterCalculatorService: EncounterCalcServiceType = useEncounterCalculatorService();
 
+  // Define the difficulty options as a constant object.
+  const ConfigDifficulty = {
+    DIFFICULTY_EASY: 'easy',
+    DIFFICULTY_MEDIUM: 'medium',
+    DIFFICULTY_HARD: 'hard',
+    DIFFICULTY_DEADLY: 'deadly'
+  } as const;
+
   // State to hold the user's input for the calculation request.
   const [crCalculationForEncounterRequest, setCrCalculationForEncounterRequest] = useState<RequestsCalculateEncounterCRsRequest>({
     difficulty: "easy",
     partyLevel: 1,
     partySize: 4,
     monsters: [
-      {
-        adjustment: 0
-      }
+      { adjustment: 0 }
     ]
   });
 
-  // State to hold the result of the calculation.
-  const [result, setResult] = useState<number | null>(null);
+  // State to hold the result of the calculation. We assume the API returns an array of monsters.
+  const [result, setResult] = useState<RequestsMonster[] | null>(null);
 
   // State to manage loading and error states for the API call.
   const [isLoading, setIsLoading] = useState(false);
@@ -40,31 +46,40 @@ export default function EncouterCalculator() {
       [name]: Number(value)
     }));
   };
-
-  // Handle changes to a specific enemy's CR input field.
-  const handleEnemyCrChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+  
+  // Handle changes to a specific monster's adjustment input field.
+  const handleMonsterAdjustmentChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = e.target;
-    const newEnemies = [...crCalculationForEncounterRequest.monsters!];
-    newEnemies[index].adjustment = Number(value);
+    const newMonsters = [...(crCalculationForEncounterRequest.monsters || [])];
+    newMonsters[index] = { ...newMonsters[index], adjustment: Number(value) };
     setCrCalculationForEncounterRequest(prev => ({
       ...prev,
-      enemies: newEnemies
+      monsters: newMonsters
     }));
   };
 
-  // Add a new enemy to the enemies array.
-  const handleAddEnemy = () => {
+  // Handle changes to the difficulty dropdown.
+  const handleDifficultyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const { value } = e.target;
     setCrCalculationForEncounterRequest(prev => ({
       ...prev,
-      enemies: [...prev.monsters!, { adjustedCr: 0 }]
+      difficulty: value as "easy" | "medium" | "hard" | "deadly"
     }));
   };
 
-  // Remove an enemy from the enemies array by index.
-  const handleRemoveEnemy = (index: number) => {
+  // Add a new monster to the monsters array.
+  const handleAddMonster = () => {
     setCrCalculationForEncounterRequest(prev => ({
       ...prev,
-      enemies: prev.monsters!.filter((_, i) => i !== index)
+      monsters: [...(prev.monsters || []), { adjustment: 0 }]
+    }));
+  };
+
+  // Remove a monster from the monsters array by index.
+  const handleRemoveMonster = (index: number) => {
+    setCrCalculationForEncounterRequest(prev => ({
+      ...prev,
+      monsters: (prev.monsters || []).filter((_, i) => i !== index)
     }));
   };
 
@@ -75,8 +90,10 @@ export default function EncouterCalculator() {
     setResult(null);
     try {
       // Call the service with the current state.
+      // The API is returning an array of monsters, so we set the result state directly.
       const response = await encounterCalculatorService.calculateCrsForEncounter(crCalculationForEncounterRequest);
-      setResult(response.result); // Assuming the response has a 'result' property
+      // CORRECTED: The service returns the data directly, not a nested 'result' property.
+      setResult(response); 
     } catch (err) {
       console.error(err);
       setError("Failed to calculate encounter. Please check your inputs.");
@@ -86,71 +103,87 @@ export default function EncouterCalculator() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 sm:p-6 lg:p-8">
-      <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-xl w-full max-w-2xl">
-        <h1 className="text-3xl sm:text-4xl font-bold text-center text-gray-800 mb-6">Encounter Calculator</h1>
+    <div className="min-h-screen bg-gray-900 flex justify-center p-4 sm:p-6 lg:p-8 text-white">
+      <div className="bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-xl w-full max-w-2xl border border-gray-700">
+        <h1 className="text-3xl sm:text-4xl font-bold text-center text-gray-100 mb-6">Encounter Calculator</h1>
         <div className="space-y-6">
 
           {/* Party Information Section */}
-          <div className="p-4 border border-gray-200 rounded-xl shadow-inner">
-            <h2 className="text-xl font-semibold text-gray-700 mb-4">Party Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-4 border border-gray-700 rounded-xl shadow-inner">
+            <h2 className="text-xl font-semibold text-gray-200 mb-4">Party Information</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="flex flex-col">
-                <label htmlFor="partysize" className="text-sm font-medium text-gray-600 mb-1">Party Size</label>
+                <label htmlFor="partySize" className="text-sm font-medium text-gray-300 mb-1">Party Size</label>
                 <input
                   type="number"
-                  id="partysize"
-                  name="partysize"
+                  id="partySize"
+                  name="partySize"
                   value={crCalculationForEncounterRequest.partySize}
                   onChange={handlePartyInfoChange}
-                  className="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="p-2 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-white"
                   min="1"
                 />
               </div>
               <div className="flex flex-col">
-                <label htmlFor="partylevel" className="text-sm font-medium text-gray-600 mb-1">Party Level</label>
+                <label htmlFor="partyLevel" className="text-sm font-medium text-gray-300 mb-1">Party Level</label>
                 <input
                   type="number"
-                  id="partylevel"
-                  name="partylevel"
+                  id="partyLevel"
+                  name="partyLevel"
                   value={crCalculationForEncounterRequest.partyLevel}
                   onChange={handlePartyInfoChange}
-                  className="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="p-2 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-white"
                   min="1"
                 />
+              </div>
+              <div className="flex flex-col">
+                <label htmlFor="difficulty" className="text-sm font-medium text-gray-300 mb-1">Difficulty</label>
+                <select
+                  id="difficulty"
+                  name="difficulty"
+                  value={crCalculationForEncounterRequest.difficulty}
+                  onChange={handleDifficultyChange}
+                  className="p-2 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-white"
+                >
+                  {Object.values(ConfigDifficulty).map(difficulty => (
+                    <option key={difficulty} value={difficulty}>{difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}</option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>
 
-          {/* Enemies Section */}
-          <div className="p-4 border border-gray-200 rounded-xl shadow-inner">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-700">Enemies</h2>
-              <button
-                onClick={handleAddEnemy}
-                className="flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-full shadow-md hover:bg-blue-700 transition duration-200"
+          {/* Add Monster Button Section */}
+          <div className="flex justify-end mt-4">
+            <button
+                onClick={handleAddMonster}
+                className="flex items-center px-4 py-2 bg-blue-500 text-white font-medium rounded-full shadow-md hover:bg-blue-600 transition duration-200"
               >
-                <Plus size={18} className="mr-2" /> Add Enemy
-              </button>
-            </div>
-            <div className="space-y-4">
-              {crCalculationForEncounterRequest.monsters!.map((enemy, index) => (
+                <Plus size={18} className="mr-2" /> Add Monster
+            </button>
+          </div>
+
+          {/* Monsters Section */}
+          <div className="p-4 border border-gray-700 rounded-xl shadow-inner">
+            <h2 className="text-xl font-semibold text-gray-200">Monsters</h2>
+            <div className="space-y-4 mt-4">
+              {crCalculationForEncounterRequest.monsters && crCalculationForEncounterRequest.monsters.map((monster, index) => (
                 <div key={index} className="flex items-center space-x-2">
-                  <label htmlFor={`enemy-cr-${index}`} className="sr-only">Adjusted CR for Enemy {index + 1}</label>
+                  <label htmlFor={`monster-cr-${index}`} className="sr-only">Adjustment for Monster {index + 1}</label>
                   <input
                     type="number"
-                    id={`enemy-cr-${index}`}
-                    value={enemy.adjustment}
-                    onChange={(e) => handleEnemyCrChange(index, e)}
-                    className="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    id={`monster-cr-${index}`}
+                    value={monster.adjustment}
+                    onChange={(e) => handleMonsterAdjustmentChange(index, e)}
+                    className="flex-1 p-2 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-white"
                     min="0"
                   />
-                  {/* The remove button is only shown for enemies after the first one to ensure at least one remains */}
+                  {/* The remove button is only shown for monsters after the first one to ensure at least one remains */}
                   {crCalculationForEncounterRequest.monsters!.length > 1 && (
                     <button
-                      onClick={() => handleRemoveEnemy(index)}
-                      className="p-2 bg-red-500 text-white rounded-full shadow-md hover:bg-red-600 transition duration-200"
-                      aria-label={`Remove Enemy ${index + 1}`}
+                      onClick={() => handleRemoveMonster(index)}
+                      className="p-2 bg-red-600 text-white rounded-full shadow-md hover:bg-red-700 transition duration-200"
+                      aria-label={`Remove Monster ${index + 1}`}
                     >
                       <Trash2 size={20} />
                     </button>
@@ -161,11 +194,11 @@ export default function EncouterCalculator() {
           </div>
 
           {/* Action Button Section */}
-          <div className="flex justify-center">
+          <div className="flex justify-center mt-6">
             <button
               onClick={handleCalculate}
               disabled={isLoading}
-              className="w-full sm:w-auto flex items-center justify-center px-8 py-3 bg-green-600 text-white font-bold text-lg rounded-full shadow-lg hover:bg-green-700 transition duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto flex items-center justify-center px-8 py-3 bg-green-500 text-white font-bold text-lg rounded-full shadow-lg hover:bg-green-600 transition duration-300 disabled:bg-gray-700 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <>
@@ -179,13 +212,29 @@ export default function EncouterCalculator() {
             </button>
           </div>
 
-          {/* Result and Error Display */}
-          {(result !== null || error) && (
-            <div className={`p-4 rounded-xl text-center font-semibold text-lg ${result !== null ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-              {result !== null && (
-                <p>The calculated CR for this encounter is: <span className="font-bold">{result}</span></p>
-              )}
-              {error && <p>{error}</p>}
+          {/* Result Display */}
+          {result && (
+            <div className={`p-4 rounded-xl font-semibold bg-green-900 text-green-200`}>
+              <p className="text-center text-lg mb-2">Calculated Monsters:</p>
+              <ul className="space-y-2">
+                {result.map((monster, index) => (
+                  <li key={index} className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-2 rounded-lg bg-green-800">
+                    <span className="font-bold">Monster {index + 1}:</span>
+                    <div className="flex flex-col sm:flex-row sm:space-x-4">
+                      <span>CR: <span className="font-bold">{monster.cr}</span></span>
+                      <span>XP: <span className="font-bold">{monster.xp}</span></span>
+                      <span>Adj: <span className="font-bold">{monster.adjustment}</span></span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Error Display */}
+          {error && (
+            <div className="p-4 rounded-xl text-center font-semibold text-lg bg-red-900 text-red-200">
+              <p>{error}</p>
             </div>
           )}
 
