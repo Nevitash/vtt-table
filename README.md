@@ -1,4 +1,4 @@
-﻿# Vtt-Table _(vtt-table)_
+# Vtt-Table _(vtt-table)_
 
 [![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
 
@@ -23,25 +23,25 @@ Game masters running tabletop campaigns often require rapid balancing calculatio
 
 Requires Node.js (v18+) and npm:
 
-`ash
+```bash
 npm install
-`
+```
 
 ## Usage
 
 Start the development server:
 
-`ash
+```bash
 npm run dev
-`
+```
 
 Open http://localhost:3000 with your browser.
 
 Generate updated client API bindings from backend OpenAPI specs:
 
-`ash
+```bash
 ./tools/generate_backend_api.sh
-`
+```
 
 ## Maintainers
 
